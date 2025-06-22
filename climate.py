@@ -168,7 +168,7 @@ class DaikinMadokaClimate(ClimateEntity):
         return MAX_TEMP
 
     async def async_set_temperature(self, **kwargs):
-       """Set new target temperature."""                                             
+        """Set new target temperature."""                                             
         new_set_point = 0                                                             
         try:                                                                  
             if (                                                                      
