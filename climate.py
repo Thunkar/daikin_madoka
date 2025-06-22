@@ -149,7 +149,7 @@ class DaikinMadokaClimate(ClimateEntity):
         if self.hvac_mode == HVACMode.HEAT:
             value = self.controller.set_point.status.heating_set_point
         else:
-            value = self.controller.set_point.status.cooling_set_point
+            value = self.controller.set_point.status.heating_set_point
         return value
 
     @property
@@ -168,24 +168,25 @@ class DaikinMadokaClimate(ClimateEntity):
         return MAX_TEMP
 
     async def async_set_temperature(self, **kwargs):
-        """Set new target temperature."""
-        try:
-            new_cooling_set_point = self.controller.set_point.status.cooling_set_point
-            new_heating_set_point = self.controller.set_point.status.cooling_set_point
+        """Set new target temperature."""                                             
+        new_set_point = 0                                                             
+        try:                                                                  
+            if (                                                                      
+                self.controller.operation_mode.status.operation_mode                  
+                != OperationModeEnum.HEAT                                             
+            ):                                                                
+                new_set_point = round(kwargs.get(ATTR_TEMPERATURE))           
+                await self.controller.set_point.update(                               
+                    SetPointStatus(new_set_point, new_set_point)                  
+                )                                                                     
             if (
-                self.controller.operation_mode.status.operation_mode
-                != OperationModeEnum.HEAT
-            ):
-                new_cooling_set_point = round(kwargs.get(ATTR_TEMPERATURE))
-            if (
-                self.controller.operation_mode.status.operation_mode
-                != OperationModeEnum.COOL
-            ):
-                new_heating_set_point = round(kwargs.get(ATTR_TEMPERATURE))
-
-            await self.controller.set_point.update(
-                SetPointStatus(new_cooling_set_point, new_heating_set_point)
-            )
+                self.controller.operation_mode.status.operation_mode          
+                != OperationModeEnum.COOL                                     
+            ):                                                                
+                new_set_point = round(kwargs.get(ATTR_TEMPERATURE))                   
+                await self.controller.set_point.update(                               
+                    SetPointStatus(new_set_point, new_set_point)              
+                )                                                   
         except ConnectionAbortedError:
             # pylint: disable=logging-not-lazy
             _LOGGER.warning(
